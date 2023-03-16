@@ -1,3 +1,5 @@
+from django.db.models import Avg
+
 from rest_framework import viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from django_filters.rest_framework import DjangoFilterBackend
@@ -9,7 +11,7 @@ from .serializers import (CategoriesSerializer,
 from .permissions import AdminOrReadOnly
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all()
+    queryset = Titles.objects.all().aggregate(rating=Avg('reviews__score'))
     serializer_class = TitlesSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (
