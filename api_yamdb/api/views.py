@@ -1,8 +1,5 @@
-from django.shortcuts import render
-
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Categories, Genres, Titles
@@ -16,8 +13,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     serializer_class = TitlesSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (
-        IsAuthenticatedOrReadOnly,
-        AdminOrReadOnly
+        AdminOrReadOnly,
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('name', 'year')
@@ -27,8 +23,14 @@ class TitlesViewSet(viewsets.ModelViewSet):
 class GenresViewSet(viewsets.ModelViewSet):
     queryset = Genres.objects.all()
     serializer_class = GenresSerializer
+    permission_classes = (
+        AdminOrReadOnly,
+    )
 
 
 class CategoriesViewSet(viewsets.ModelViewSet):
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
+    permission_classes = (
+        AdminOrReadOnly,
+    )
