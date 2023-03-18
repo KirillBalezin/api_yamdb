@@ -10,6 +10,7 @@ from .serializers import (CategoriesSerializer,
                           TitlesSerializer)
 from .permissions import AdminOrReadOnly
 
+
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Titles.objects.all().aggregate(rating=Avg('reviews__score'))
     serializer_class = TitlesSerializer
