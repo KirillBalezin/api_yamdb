@@ -100,15 +100,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all().aggregate(rating=Avg('reviews__score'))
+    queryset = Titles.objects.all().annotate(rating=Avg('reviews__score'))
     serializer_class = TitlesSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAdminOrReadOnly,
     )
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name', 'year')
-    ordering_fields = ('name', 'year')
+    filterset_fields = ('name', 'genre__slug', 'category__slug', 'year')
+    ordering_fields = ('name', 'genre__slug', 'category__slug', 'year')
 
 
 class GenresViewSet(viewsets.ModelViewSet):
