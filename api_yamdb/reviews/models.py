@@ -23,6 +23,16 @@ class User(AbstractUser):
         null=True,
         unique=True
     )
+    first_name = models.CharField(
+        verbose_name='Имя',
+        max_length=150,
+        blank=True
+    )
+    last_name = models.CharField(
+        verbose_name='Фамилия',
+        max_length=150,
+        blank=True
+    )
     role = models.CharField(
         verbose_name='Роль',
         max_length=50,
