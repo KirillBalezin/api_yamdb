@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
-    USER = 'user'
+    USER = 'User'
     ROLES = [
         (ADMIN, 'Administrator'),
         (MODERATOR, 'Moderator'),
