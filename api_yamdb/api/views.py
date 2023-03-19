@@ -26,6 +26,7 @@ from .serializers import (CategoriesSerializer,
                           UserSerializer)
 from .permissions import (IsAdminOrReadOnly, IsAdmin,
                           IsAdminModeratorOwnerOrReadOnly)
+from .filters import TitleFilter
 
 
 @api_view(["POST"])
@@ -111,7 +112,7 @@ class TitlesViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('name', 'genre__slug', 'category__slug', 'year')
+    filterset_class = TitleFilter
     ordering_fields = ('name', 'genre__slug', 'category__slug', 'year')
 
     def get_serializer_class(self):
@@ -120,12 +121,8 @@ class TitlesViewSet(viewsets.ModelViewSet):
         return TitlesWriteSerializer
 
 
-class GenresViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    GenericViewSet
-):
+class GenresViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+                    mixins.DestroyModelMixin, GenericViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenresSerializer
     filter_backends = (SearchFilter,)
@@ -134,12 +131,8 @@ class GenresViewSet(
     permission_classes = (IsAdminOrReadOnly,)
 
 
-class CategoriesViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    GenericViewSet
-):
+class CategoriesViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+                        mixins.DestroyModelMixin, GenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategoriesSerializer
     filter_backends = (SearchFilter,)
