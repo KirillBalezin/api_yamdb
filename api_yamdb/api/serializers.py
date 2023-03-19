@@ -1,4 +1,5 @@
 import datetime as dt
+import re
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -91,6 +92,28 @@ class UserSerializer(serializers.ModelSerializer):
         ]
     )
 
+    def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
+        if value.lower() == "me":
+            raise serializers.ValidationError(
+                "Имя пользователя не может быть 'me'"
+            )
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                "username не может быть длиннее 150 символов"
+            )
+        return value
+
+    def validate_email(self, value):
+        if len(value) > 254:
+            raise serializers.ValidationError(
+                "email не может быть длиннее 254 символов"
+            )
+        return value
+
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
@@ -98,6 +121,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
+
+    def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
+
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
@@ -118,8 +148,25 @@ class RegisterDataSerializer(serializers.ModelSerializer):
     )
 
     def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
         if value.lower() == "me":
-            raise serializers.ValidationError("Username 'me' is not valid")
+            raise serializers.ValidationError(
+                "Имя пользователя не может быть 'me'"
+            )
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                "username не может быть длиннее 150 символов"
+            )
+        return value
+
+    def validate_email(self, value):
+        if len(value) > 254:
+            raise serializers.ValidationError(
+                "email не может быть длиннее 254 символов"
+            )
         return value
 
     class Meta:
