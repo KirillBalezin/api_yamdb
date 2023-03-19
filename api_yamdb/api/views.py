@@ -100,7 +100,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
-    queryset = Titles.objects.all().aggregate(rating=Avg('reviews__score'))
+    queryset = Titles.objects.all().annotate(rating=Avg('reviews__score'))
     serializer_class = TitlesSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (

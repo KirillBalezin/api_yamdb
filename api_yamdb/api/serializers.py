@@ -1,4 +1,5 @@
 import datetime as dt
+import re
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
@@ -109,7 +110,17 @@ class RegisterDataSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         if value.lower() == "me":
-            raise serializers.ValidationError("Username 'me' is not valid")
+            raise serializers.ValidationError(
+                "Имя пользователя не может быть 'me'"
+            )
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                "username не может быть длиннее 150 символов"
+            )
         return value
 
     class Meta:
