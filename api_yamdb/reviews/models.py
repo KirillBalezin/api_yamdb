@@ -70,7 +70,7 @@ class User(AbstractUser):
         ]
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.CharField(
         max_length=256,
         verbose_name="Название жанра"
@@ -78,6 +78,7 @@ class Genres(models.Model):
     slug = models.SlugField(
         unique=True,
         max_length=50,
+        db_index=True,
         verbose_name="Slug жанра"
     )
 
@@ -88,7 +89,7 @@ class Genres(models.Model):
         return self.name
 
 
-class Categories(models.Model):
+class Category(models.Model):
     name = models.CharField(
         max_length=256,
         verbose_name="Название категории"
@@ -96,6 +97,7 @@ class Categories(models.Model):
     slug = models.SlugField(
         unique=True,
         max_length=50,
+        db_index=True,
         verbose_name="Slug категории"
     )
 
@@ -106,7 +108,7 @@ class Categories(models.Model):
         return self.name
 
 
-class Titles(models.Model):
+class Title(models.Model):
     name = models.CharField(
         max_length=256,
         verbose_name="Название произведения"
@@ -118,12 +120,12 @@ class Titles(models.Model):
         verbose_name="Описание"
     )
     genre = models.ManyToManyField(
-        Genres,
-        through='GenresTitles',
+        Genre,
+        through='GenreTitle',
         verbose_name="Жанр"
     )
     category = models.ForeignKey(
-        Categories,
+        Category,
         null=True,
         on_delete=models.SET_NULL,
         verbose_name="Категория"
@@ -136,14 +138,14 @@ class Titles(models.Model):
         return self.name
 
 
-class GenresTitles(models.Model):
+class GenreTitle(models.Model):
     genre = models.ForeignKey(
-        Genres,
+        Genre,
         null=True,
         on_delete=models.SET_NULL
     )
     title = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.CASCADE
     )
 
@@ -158,7 +160,7 @@ class Review(models.Model):
         verbose_name='Автор',
     )
     title = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.CASCADE,
         verbose_name='Произведение',
     )
@@ -201,3 +203,6 @@ class Comment(models.Model):
         auto_now_add=True,
         db_index=True
     )
+
+    class Meta:
+        default_related_name = 'comments'
