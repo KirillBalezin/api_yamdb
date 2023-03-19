@@ -1,7 +1,8 @@
 import datetime as dt
+import re
 
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
+from rest_framework.validators import UniqueValidator
 
 from reviews.models import Category, Genre, Title, Review, Comment, User
 
@@ -51,28 +52,30 @@ class TitlesReadSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField()
+    author = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
-        read_only_fields = ('author', 'title')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('author', 'title'),
-                message='Вы уже оставили отзыв!'
+
+    def validate(self, data):
+        if not self.context.get('request').method == 'POST':
+            return data
+        author = self.context.get('request').user
+        title_id = self.context.get('view').kwargs.get('title_id')
+        if Review.objects.filter(author=author, title=title_id).exists():
+            raise serializers.ValidationError(
+                'Повторное написание отзывов запрещено.'
             )
-        ]
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField()
+    author = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date')
         model = Comment
-        read_only_fields = ('author', 'review')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -88,6 +91,28 @@ class UserSerializer(serializers.ModelSerializer):
         ]
     )
 
+    def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
+        if value.lower() == "me":
+            raise serializers.ValidationError(
+                "Имя пользователя не может быть 'me'"
+            )
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                "username не может быть длиннее 150 символов"
+            )
+        return value
+
+    def validate_email(self, value):
+        if len(value) > 254:
+            raise serializers.ValidationError(
+                "email не может быть длиннее 254 символов"
+            )
+        return value
+
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
@@ -95,6 +120,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEditSerializer(serializers.ModelSerializer):
+
+    def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
+
     class Meta:
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
@@ -115,8 +147,25 @@ class RegisterDataSerializer(serializers.ModelSerializer):
     )
 
     def validate_username(self, value):
+        if not re.match(r'[\w.@+-]+\Z', value):
+            raise serializers.ValidationError(
+                "Имя пользователя содержит запрещённые символы"
+            )
         if value.lower() == "me":
-            raise serializers.ValidationError("Username 'me' is not valid")
+            raise serializers.ValidationError(
+                "Имя пользователя не может быть 'me'"
+            )
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                "username не может быть длиннее 150 символов"
+            )
+        return value
+
+    def validate_email(self, value):
+        if len(value) > 254:
+            raise serializers.ValidationError(
+                "email не может быть длиннее 254 символов"
+            )
         return value
 
     class Meta:
