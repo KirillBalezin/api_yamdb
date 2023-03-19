@@ -3,44 +3,51 @@ import datetime as dt
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, Review, Comment, User
+from reviews.models import Category, Genre, Title, Review, Comment, User
 
 
 class GenresSerializer(serializers.ModelSerializer):
-    slug = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='genre_slug'
-    )
+
+    class Meta:
+        exclude = ('id',)
+        model = Genre
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        exclude = ('id',)
+        model = Category
+
+
+class TitlesWriteSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(queryset=Category.objects.all(),
+                                            slug_field='slug'
+                                            )
+    genre = serializers.SlugRelatedField(queryset=Genre.objects.all(),
+                                         many=True,
+                                         slug_field='slug'
+                                         )
 
     class Meta:
         fields = '__all__'
-        model = Genres
+        model = Title
 
 
-class TitlesSerializer(serializers.ModelSerializer):
+class TitlesReadSerializer(serializers.ModelSerializer):
+    category = CategoriesSerializer(read_only=True)
     genre = GenresSerializer(read_only=True, many=True)
     rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = '__all__'
-        model = Titles
+        model = Title
 
     def validate_year(self, value):
         year = dt.date.today().year
         if value > year:
             raise serializers.ValidationError('Проверьте год выпуска!')
         return value
-
-
-class CategoriesSerializer(serializers.ModelSerializer):
-    slug = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='category_slug'
-    )
-
-    class Meta:
-        fields = '__all__'
-        model = Categories
 
 
 class ReviewSerializer(serializers.ModelSerializer):
