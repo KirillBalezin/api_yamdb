@@ -122,7 +122,7 @@ class GenresViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     GenericViewSet
-    ):
+):
     queryset = Genre.objects.all()
     serializer_class = GenresSerializer
     filter_backends = (SearchFilter,)
@@ -136,7 +136,7 @@ class CategoriesViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     GenericViewSet
-    ):
+):
     queryset = Category.objects.all()
     serializer_class = CategoriesSerializer
     filter_backends = (SearchFilter,)
@@ -148,7 +148,7 @@ class CategoriesViewSet(
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly | IsAdminModeratorOwnerOrReadOnly,
+        IsAdminModeratorOwnerOrReadOnly,
     )
 
     def get_title(self):
@@ -167,7 +167,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly | IsAdminModeratorOwnerOrReadOnly,
+        IsAdminModeratorOwnerOrReadOnly,
     )
 
     def get_review(self):
