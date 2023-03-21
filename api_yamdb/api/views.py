@@ -2,6 +2,7 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import viewsets, permissions, status, mixins, filters
 from rest_framework.pagination import LimitOffsetPagination
@@ -32,20 +33,37 @@ from .filters import TitleFilter
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
-    serializer = RegisterDataSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    user = get_object_or_404(
-        User,
-        username=serializer.validated_data["username"]
-    )
-    confirmation_code = default_token_generator.make_token(user)
-    send_mail(
-        subject="YaMDb registration",
-        message=f"Your confirmation code: {confirmation_code}",
-        from_email=None,
-        recipient_list=[user.email],
-    )
+    try:
+        user = User.objects.get(email=request.data.get('email'),
+                                username=request.data.get('username')
+                                )
+    except ObjectDoesNotExist:
+        user = None
+    if user:
+        confirmation_code = default_token_generator.make_token(user)
+        send_mail(
+            subject="YaMDb registration",
+            message=f"Your confirmation code: {confirmation_code}",
+            from_email=None,
+            recipient_list=[user.email],
+        )
+        return Response(f"Код:{confirmation_code}",
+                        status=status.HTTP_200_OK)
+    else:
+        serializer = RegisterDataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        user = get_object_or_404(
+            User,
+            username=serializer.validated_data["username"]
+        )
+        confirmation_code = default_token_generator.make_token(user)
+        send_mail(
+            subject="YaMDb registration",
+            message=f"Your confirmation code: {confirmation_code}",
+            from_email=None,
+            recipient_list=[user.email],
+        )
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -3,7 +3,6 @@ from django.contrib import admin
 from .models import Category, Genre, Title, Review, Comment, User
 
 
-
 class TitleAdmin(admin.ModelAdmin):
     list_display = ('name', 'year', 'description', 'category',)
     search_fields = ('name',)
