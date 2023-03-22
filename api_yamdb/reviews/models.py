@@ -2,7 +2,9 @@ from datetime import datetime
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import (MinValueValidator,
+                                    MaxValueValidator,
+                                    RegexValidator)
 
 
 MIN_YEAR = 0
@@ -10,9 +12,8 @@ MAX_LENGTH_NAME = 256
 MAX_LENGTH_SLUG = 50
 SCORE_MIN = 1
 SCORE_MAX = 10
-NAME_USERNAME_MAX_LENGTH = 150
+USER_NAME_MAX_LENGTH = 150
 EMAIL_MAX_LENGTH = 254
-ROLE_MAX_LENGTH = 50
 
 
 class User(AbstractUser):
@@ -32,23 +33,27 @@ class User(AbstractUser):
     )
     username = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=NAME_USERNAME_MAX_LENGTH,
+        max_length=USER_NAME_MAX_LENGTH,
         null=True,
-        unique=True
+        unique=True,
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+$',
+            message='Использованы недопустимые символы.'
+        )]
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=NAME_USERNAME_MAX_LENGTH,
+        max_length=USER_NAME_MAX_LENGTH,
         blank=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=NAME_USERNAME_MAX_LENGTH,
+        max_length=USER_NAME_MAX_LENGTH,
         blank=True
     )
     role = models.CharField(
         verbose_name='Роль',
-        max_length=ROLE_MAX_LENGTH,
+        max_length=(len(max(max(ROLES, key=len)))),
         choices=ROLES,
         default=USER
     )
@@ -70,7 +75,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
-        ordering = ['id']
+        ordering = ['username']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
