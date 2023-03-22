@@ -3,7 +3,10 @@ import re
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Category, Genre, Title, Review, Comment, User
+from reviews.models import (
+    Category, Genre, Title, Review, Comment, User,
+    USER_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -91,18 +94,18 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Имя пользователя содержит запрещённые символы"
             )
-        if value.lower() == "me":
+        if value == "me":
             raise serializers.ValidationError(
                 "Имя пользователя не может быть 'me'"
             )
-        if len(value) > 150:
+        if len(value) > USER_NAME_MAX_LENGTH:
             raise serializers.ValidationError(
                 "username не может быть длиннее 150 символов"
             )
         return value
 
     def validate_email(self, value):
-        if len(value) > 254:
+        if len(value) > EMAIL_MAX_LENGTH:
             raise serializers.ValidationError(
                 "email не может быть длиннее 254 символов"
             )
@@ -130,34 +133,41 @@ class UserEditSerializer(serializers.ModelSerializer):
 
 
 class RegisterDataSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
-    )
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+
+    def validate(self, value):
+        email = value['email']
+        username = value['username']
+        if (User.objects.filter(email=email).exists()
+                and not User.objects.filter(username=username).exists()):
+            raise serializers.ValidationError(
+                'Попробуйте указать другую электронную почту.'
+            )
+        if (User.objects.filter(username=username).exists()
+                and not User.objects.filter(email=email).exists()):
+            raise serializers.ValidationError(
+                'Попробуйте указать другой юзернейм.'
+            )
+        return value
 
     def validate_username(self, value):
         if not re.match(r'[\w.@+-]+\Z', value):
             raise serializers.ValidationError(
                 "Имя пользователя содержит запрещённые символы"
             )
-        if value.lower() == "me":
+        if value == "me":
             raise serializers.ValidationError(
                 "Имя пользователя не может быть 'me'"
             )
-        if len(value) > 150:
+        if len(value) > USER_NAME_MAX_LENGTH:
             raise serializers.ValidationError(
                 "username не может быть длиннее 150 символов"
             )
         return value
 
     def validate_email(self, value):
-        if len(value) > 254:
+        if len(value) > EMAIL_MAX_LENGTH:
             raise serializers.ValidationError(
                 "email не может быть длиннее 254 символов"
             )
