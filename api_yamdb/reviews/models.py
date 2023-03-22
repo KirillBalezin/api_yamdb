@@ -10,6 +10,9 @@ MAX_LENGTH_NAME = 256
 MAX_LENGTH_SLUG = 50
 SCORE_MIN = 1
 SCORE_MAX = 10
+NAME_USERNAME_MAX_LENGTH = 150
+EMAIL_MAX_LENGTH = 254
+ROLE_MAX_LENGTH = 50
 
 
 class User(AbstractUser):
@@ -24,28 +27,28 @@ class User(AbstractUser):
 
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
-        max_length=254,
+        max_length=EMAIL_MAX_LENGTH,
         unique=True,
     )
     username = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=150,
+        max_length=NAME_USERNAME_MAX_LENGTH,
         null=True,
         unique=True
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150,
+        max_length=NAME_USERNAME_MAX_LENGTH,
         blank=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150,
+        max_length=NAME_USERNAME_MAX_LENGTH,
         blank=True
     )
     role = models.CharField(
         verbose_name='Роль',
-        max_length=50,
+        max_length=ROLE_MAX_LENGTH,
         choices=ROLES,
         default=USER
     )

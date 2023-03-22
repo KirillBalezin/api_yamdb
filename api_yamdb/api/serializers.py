@@ -3,7 +3,10 @@ import re
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Category, Genre, Title, Review, Comment, User
+from reviews.models import (
+    Category, Genre, Title, Review, Comment, User,
+    NAME_USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH
+)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -91,18 +94,18 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Имя пользователя содержит запрещённые символы"
             )
-        if value.lower() == "me":
+        if value == "me":
             raise serializers.ValidationError(
                 "Имя пользователя не может быть 'me'"
             )
-        if len(value) > 150:
+        if len(value) > NAME_USERNAME_MAX_LENGTH:
             raise serializers.ValidationError(
                 "username не может быть длиннее 150 символов"
             )
         return value
 
     def validate_email(self, value):
-        if len(value) > 254:
+        if len(value) > EMAIL_MAX_LENGTH:
             raise serializers.ValidationError(
                 "email не может быть длиннее 254 символов"
             )
@@ -150,14 +153,14 @@ class RegisterDataSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Имя пользователя не может быть 'me'"
             )
-        if len(value) > 150:
+        if len(value) > NAME_USERNAME_MAX_LENGTH:
             raise serializers.ValidationError(
                 "username не может быть длиннее 150 символов"
             )
         return value
 
     def validate_email(self, value):
-        if len(value) > 254:
+        if len(value) > EMAIL_MAX_LENGTH:
             raise serializers.ValidationError(
                 "email не может быть длиннее 254 символов"
             )
