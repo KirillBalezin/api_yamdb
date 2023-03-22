@@ -1,6 +1,19 @@
+from datetime import datetime
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import (MinValueValidator,
+                                    MaxValueValidator,
+                                    RegexValidator)
+
+
+MIN_YEAR = 0
+MAX_LENGTH_NAME = 256
+MAX_LENGTH_SLUG = 50
+SCORE_MIN = 1
+SCORE_MAX = 10
+USER_NAME_MAX_LENGTH = 150
+EMAIL_MAX_LENGTH = 254
 
 
 class User(AbstractUser):
@@ -15,28 +28,32 @@ class User(AbstractUser):
 
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
-        max_length=254,
+        max_length=EMAIL_MAX_LENGTH,
         unique=True,
     )
     username = models.CharField(
         verbose_name='Имя пользователя',
-        max_length=150,
+        max_length=USER_NAME_MAX_LENGTH,
         null=True,
-        unique=True
+        unique=True,
+        validators=[RegexValidator(
+            regex=r'^[\w.@+-]+$',
+            message='Использованы недопустимые символы.'
+        )]
     )
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=150,
+        max_length=USER_NAME_MAX_LENGTH,
         blank=True
     )
     last_name = models.CharField(
         verbose_name='Фамилия',
-        max_length=150,
+        max_length=USER_NAME_MAX_LENGTH,
         blank=True
     )
     role = models.CharField(
         verbose_name='Роль',
-        max_length=50,
+        max_length=(len(max(max(ROLES, key=len)))),
         choices=ROLES,
         default=USER
     )
@@ -58,7 +75,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['username']
 
     class Meta:
-        ordering = ['id']
+        ordering = ['username']
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
@@ -75,18 +92,21 @@ class User(AbstractUser):
 
 class Genre(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название жанра"
     )
     slug = models.SlugField(
         unique=True,
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         db_index=True,
         verbose_name="Slug жанра"
     )
 
     class Meta:
+        ordering = ['name']
         default_related_name = 'genres'
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return self.name
@@ -94,18 +114,21 @@ class Genre(models.Model):
 
 class Category(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название категории"
     )
     slug = models.SlugField(
         unique=True,
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         db_index=True,
         verbose_name="Slug категории"
     )
 
     class Meta:
+        ordering = ['name']
         default_related_name = 'categories'
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
         return self.name
@@ -113,11 +136,13 @@ class Category(models.Model):
 
 class Title(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название произведения"
     )
     year = models.IntegerField(
-        verbose_name="Год выпуска"
+        verbose_name="Год выпуска",
+        validators=[MinValueValidator(MIN_YEAR),
+                    MaxValueValidator(int(datetime.now().year))]
     )
     description = models.TextField(
         verbose_name="Описание"
@@ -135,7 +160,10 @@ class Title(models.Model):
     )
 
     class Meta:
+        ordering = ['-year']
         default_related_name = 'titles'
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name
@@ -172,8 +200,8 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         verbose_name='Рейтинг',
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(10)]
+        validators=[MinValueValidator(SCORE_MIN),
+                    MaxValueValidator(SCORE_MAX)]
     )
     pub_date = models.DateTimeField(
         'Дата добавления',
@@ -182,6 +210,9 @@ class Review(models.Model):
     )
 
     class Meta:
+        ordering = ['-pub_date']
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
         default_related_name = 'reviews'
         constraints = [models.UniqueConstraint(
             fields=['author', 'title'], name='unique_review')]
@@ -208,4 +239,7 @@ class Comment(models.Model):
     )
 
     class Meta:
+        ordering = ['-pub_date']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         default_related_name = 'comments'

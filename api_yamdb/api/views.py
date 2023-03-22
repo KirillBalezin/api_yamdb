@@ -2,7 +2,6 @@ from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import viewsets, permissions, status, mixins, filters
 from rest_framework.pagination import LimitOffsetPagination
@@ -15,10 +14,10 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Category, Genre, Title, Review, User
-from .serializers import (CategoriesSerializer,
-                          GenresSerializer,
-                          TitlesReadSerializer,
-                          TitlesWriteSerializer,
+from .serializers import (CategorySerializer,
+                          GenreSerializer,
+                          TitleReadSerializer,
+                          TitleWriteSerializer,
                           ReviewSerializer,
                           CommentSerializer,
                           RegisterDataSerializer,
@@ -33,38 +32,16 @@ from .filters import TitleFilter
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def register(request):
-    try:
-        user = User.objects.get(email=request.data.get('email'),
-                                username=request.data.get('username')
-                                )
-    except ObjectDoesNotExist:
-        user = None
-    if user:
-        confirmation_code = default_token_generator.make_token(user)
-        send_mail(
-            subject="YaMDb registration",
-            message=f"Your confirmation code: {confirmation_code}",
-            from_email=None,
-            recipient_list=[user.email],
-        )
-        return Response(f"Код:{confirmation_code}",
-                        status=status.HTTP_200_OK)
-    else:
-        serializer = RegisterDataSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = get_object_or_404(
-            User,
-            username=serializer.validated_data["username"]
-        )
-        confirmation_code = default_token_generator.make_token(user)
-        send_mail(
-            subject="YaMDb registration",
-            message=f"Your confirmation code: {confirmation_code}",
-            from_email=None,
-            recipient_list=[user.email],
-        )
-
+    serializer = RegisterDataSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user, _ = User.objects.get_or_create(**serializer.validated_data)
+    confirmation_code = default_token_generator.make_token(user)
+    send_mail(
+        subject="YaMDb registration",
+        message=f"Your confirmation code: {confirmation_code}",
+        from_email=None,
+        recipient_list=[user.email]
+    )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -112,21 +89,19 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == "GET":
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        if request.method == "PATCH":
-            serializer = self.get_serializer(
-                user,
-                data=request.data,
-                partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        serializer = self.get_serializer(
+            user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
-    serializer_class = TitlesWriteSerializer
+    serializer_class = TitleWriteSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
@@ -135,14 +110,14 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return TitlesReadSerializer
-        return TitlesWriteSerializer
+            return TitleReadSerializer
+        return TitleWriteSerializer
 
 
 class GenresViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                     mixins.DestroyModelMixin, GenericViewSet):
     queryset = Genre.objects.all()
-    serializer_class = GenresSerializer
+    serializer_class = GenreSerializer
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -152,7 +127,7 @@ class GenresViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 class CategoriesViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                         mixins.DestroyModelMixin, GenericViewSet):
     queryset = Category.objects.all()
-    serializer_class = CategoriesSerializer
+    serializer_class = CategorySerializer
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -165,16 +140,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         IsAdminModeratorOwnerOrReadOnly,
     )
 
-    def get_title(self):
+    @property
+    def title(self):
         return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        return self.get_title().reviews.all()
+        return self.title.reviews.all()
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            title=self.get_title()
+            title=self.title
         )
 
 
@@ -184,7 +160,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         IsAdminModeratorOwnerOrReadOnly,
     )
 
-    def get_review(self):
+    @property
+    def review(self):
         return get_object_or_404(
             Review,
             pk=self.kwargs.get('review_id'),
@@ -192,10 +169,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        return self.get_review().comments.all()
+        return self.review.comments.all()
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=self.get_review()
+            review=self.review
         )
