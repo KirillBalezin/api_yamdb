@@ -3,6 +3,10 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+SCORE_MIN = 1
+SCORE_MAX = 10
+
+
 class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
@@ -172,8 +176,8 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         verbose_name='Рейтинг',
-        validators=[MinValueValidator(1),
-                    MaxValueValidator(10)]
+        validators=[MinValueValidator(SCORE_MIN),
+                    MaxValueValidator(SCORE_MAX)]
     )
     pub_date = models.DateTimeField(
         'Дата добавления',
@@ -182,6 +186,9 @@ class Review(models.Model):
     )
 
     class Meta:
+        ordering = ['-pub_date']
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
         default_related_name = 'reviews'
         constraints = [models.UniqueConstraint(
             fields=['author', 'title'], name='unique_review')]
@@ -208,4 +215,7 @@ class Comment(models.Model):
     )
 
     class Meta:
+        ordering = ['-pub_date']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
         default_related_name = 'comments'
