@@ -15,10 +15,10 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django_filters.rest_framework import DjangoFilterBackend
 
 from reviews.models import Category, Genre, Title, Review, User
-from .serializers import (CategoriesSerializer,
-                          GenresSerializer,
-                          TitlesReadSerializer,
-                          TitlesWriteSerializer,
+from .serializers import (CategorySerializer,
+                          GenreSerializer,
+                          TitleReadSerializer,
+                          TitleWriteSerializer,
                           ReviewSerializer,
                           CommentSerializer,
                           RegisterDataSerializer,
@@ -126,7 +126,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class TitlesViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(rating=Avg('reviews__score'))
-    serializer_class = TitlesWriteSerializer
+    serializer_class = TitleWriteSerializer
     pagination_class = LimitOffsetPagination
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
@@ -135,14 +135,14 @@ class TitlesViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return TitlesReadSerializer
-        return TitlesWriteSerializer
+            return TitleReadSerializer
+        return TitleWriteSerializer
 
 
 class GenresViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                     mixins.DestroyModelMixin, GenericViewSet):
     queryset = Genre.objects.all()
-    serializer_class = GenresSerializer
+    serializer_class = GenreSerializer
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -152,7 +152,7 @@ class GenresViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 class CategoriesViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                         mixins.DestroyModelMixin, GenericViewSet):
     queryset = Category.objects.all()
-    serializer_class = CategoriesSerializer
+    serializer_class = CategorySerializer
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'

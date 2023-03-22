@@ -1,8 +1,13 @@
+from datetime import datetime
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+MIN_YEAR = 0
+MAX_LENGTH_NAME = 256
+MAX_LENGTH_SLUG = 50
 SCORE_MIN = 1
 SCORE_MAX = 10
 
@@ -79,18 +84,21 @@ class User(AbstractUser):
 
 class Genre(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название жанра"
     )
     slug = models.SlugField(
         unique=True,
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         db_index=True,
         verbose_name="Slug жанра"
     )
 
     class Meta:
+        ordering = ['name']
         default_related_name = 'genres'
+        verbose_name = 'Жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return self.name
@@ -98,18 +106,21 @@ class Genre(models.Model):
 
 class Category(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название категории"
     )
     slug = models.SlugField(
         unique=True,
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         db_index=True,
         verbose_name="Slug категории"
     )
 
     class Meta:
+        ordering = ['name']
         default_related_name = 'categories'
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
 
     def __str__(self):
         return self.name
@@ -117,11 +128,13 @@ class Category(models.Model):
 
 class Title(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name="Название произведения"
     )
     year = models.IntegerField(
-        verbose_name="Год выпуска"
+        verbose_name="Год выпуска",
+        validators=[MinValueValidator(MIN_YEAR),
+                    MaxValueValidator(int(datetime.now().year))]
     )
     description = models.TextField(
         verbose_name="Описание"
@@ -139,7 +152,10 @@ class Title(models.Model):
     )
 
     class Meta:
+        ordering = ['-year']
         default_related_name = 'titles'
+        verbose_name = 'Произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name
