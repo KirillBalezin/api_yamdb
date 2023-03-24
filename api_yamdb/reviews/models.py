@@ -3,8 +3,9 @@ from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import (MinValueValidator,
-                                    MaxValueValidator,
-                                    RegexValidator)
+                                    MaxValueValidator)
+
+from .validators import validate_username
 
 
 MIN_YEAR = 0
@@ -36,10 +37,7 @@ class User(AbstractUser):
         max_length=USER_NAME_MAX_LENGTH,
         null=True,
         unique=True,
-        validators=[RegexValidator(
-            regex=r'^[\w.@+-]+$',
-            message='Использованы недопустимые символы.'
-        )]
+        validators=[validate_username]
     )
     first_name = models.CharField(
         verbose_name='Имя',
@@ -70,9 +68,6 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         return self.role == self.ADMIN
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
 
     class Meta:
         ordering = ['username']
