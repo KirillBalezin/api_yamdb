@@ -5,6 +5,8 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import (MinValueValidator,
                                     MaxValueValidator)
 
+from .validators import validate_username
+
 
 MIN_YEAR = 0
 MAX_LENGTH_NAME = 256
@@ -35,6 +37,7 @@ class User(AbstractUser):
         max_length=USER_NAME_MAX_LENGTH,
         null=True,
         unique=True,
+        validators=[validate_username]
     )
     first_name = models.CharField(
         verbose_name='Имя',

@@ -1,5 +1,3 @@
-import re
-
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -7,7 +5,7 @@ from reviews.models import (
     Category, Genre, Title, Review, Comment, User,
     USER_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH
 )
-from django.core.validators import (RegexValidator)
+from reviews.validators import validate_username
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -79,39 +77,20 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
+        max_length=USER_NAME_MAX_LENGTH,
+        required=True,
         validators=[
             UniqueValidator(queryset=User.objects.all()),
-            RegexValidator(
-                regex=r'^[\w.@+-]+$',
-                message='Использованы недопустимые символы.'
-            )
+            validate_username
         ],
-        required=True,
     )
     email = serializers.EmailField(
+        max_length=EMAIL_MAX_LENGTH,
+        required=True,
         validators=[
             UniqueValidator(queryset=User.objects.all())
         ],
-        required=True,
     )
-
-    def validate_username(self, value):
-        if value == "me":
-            raise serializers.ValidationError(
-                "Имя пользователя не может быть 'me'"
-            )
-        if len(value) > USER_NAME_MAX_LENGTH:
-            raise serializers.ValidationError(
-                "username не может быть длиннее 150 символов"
-            )
-        return value
-
-    def validate_email(self, value):
-        if len(value) > EMAIL_MAX_LENGTH:
-            raise serializers.ValidationError(
-                "email не может быть длиннее 254 символов"
-            )
-        return value
 
     class Meta:
         fields = ("username", "email", "first_name",
@@ -130,8 +109,14 @@ class UserEditSerializer(UserSerializer):
 
 
 class RegisterDataSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
+    username = serializers.CharField(
+        max_length=USER_NAME_MAX_LENGTH,
+        required=True,
+        validators=[
+            validate_username
+        ],
+    )
+    email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH, required=True)
 
     def validate(self, value):
         email = value['email']
@@ -145,28 +130,6 @@ class RegisterDataSerializer(serializers.ModelSerializer):
                 and not User.objects.filter(email=email).exists()):
             raise serializers.ValidationError(
                 'Попробуйте указать другой юзернейм.'
-            )
-        return value
-
-    def validate_username(self, value):
-        if not re.match(r'[\w.@+-]+\Z', value):
-            raise serializers.ValidationError(
-                "Имя пользователя содержит запрещённые символы"
-            )
-        if value == "me":
-            raise serializers.ValidationError(
-                "Имя пользователя не может быть 'me'"
-            )
-        if len(value) > USER_NAME_MAX_LENGTH:
-            raise serializers.ValidationError(
-                "username не может быть длиннее 150 символов"
-            )
-        return value
-
-    def validate_email(self, value):
-        if len(value) > EMAIL_MAX_LENGTH:
-            raise serializers.ValidationError(
-                "email не может быть длиннее 254 символов"
             )
         return value
 
