@@ -7,6 +7,7 @@ from reviews.models import (
     Category, Genre, Title, Review, Comment, User,
     USER_NAME_MAX_LENGTH, EMAIL_MAX_LENGTH
 )
+from django.core.validators import (RegexValidator)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -79,21 +80,22 @@ class CommentSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         validators=[
-            UniqueValidator(queryset=User.objects.all())
+            UniqueValidator(queryset=User.objects.all()),
+            RegexValidator(
+                regex=r'^[\w.@+-]+$',
+                message='Использованы недопустимые символы.'
+            )
         ],
         required=True,
     )
     email = serializers.EmailField(
         validators=[
             UniqueValidator(queryset=User.objects.all())
-        ]
+        ],
+        required=True,
     )
 
     def validate_username(self, value):
-        if not re.match(r'[\w.@+-]+\Z', value):
-            raise serializers.ValidationError(
-                "Имя пользователя содержит запрещённые символы"
-            )
         if value == "me":
             raise serializers.ValidationError(
                 "Имя пользователя не может быть 'me'"
@@ -115,15 +117,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("username", "email", "first_name",
                   "last_name", "bio", "role")
         model = User
+        read_only_fields = []
 
 
-class UserEditSerializer(serializers.ModelSerializer):
-
-    def validate_username(self, value):
-        if not re.match(r'[\w.@+-]+\Z', value):
-            raise serializers.ValidationError(
-                "Имя пользователя содержит запрещённые символы"
-            )
+class UserEditSerializer(UserSerializer):
 
     class Meta:
         fields = ("username", "email", "first_name",

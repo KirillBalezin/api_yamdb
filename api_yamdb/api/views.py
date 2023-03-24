@@ -34,7 +34,7 @@ from .filters import TitleFilter
 def register(request):
     serializer = RegisterDataSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user, _ = User.objects.get_or_create(**serializer.validated_data)
+    user, _ = User.objects.update_or_create(**serializer.validated_data)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject="YaMDb registration",
