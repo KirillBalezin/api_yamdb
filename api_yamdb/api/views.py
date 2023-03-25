@@ -1,4 +1,5 @@
 from django.db.models import Avg
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -34,7 +35,10 @@ from .filters import TitleFilter
 def register(request):
     serializer = RegisterDataSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user, _ = User.objects.get_or_create(**serializer.validated_data)
+    try:
+        user, _ = User.objects.get_or_create(**serializer.validated_data)
+    except IntegrityError:
+        raise 'Что-то пошло не так, попробуйте позже.'
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject="YaMDb registration",
